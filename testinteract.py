@@ -6,4 +6,4 @@ context = "Super Bowl 50 was an American football game to determine the champion
 
 pathfile = "drqanetwork"
 
-predict(question,context,pathfile,"RNN")
+print(predict(question,context,pathfile,"RNN","vocab_set"))
