@@ -1,7 +1,5 @@
-#from rnnmodel import docreader
 from drqamodel import docreader
-#from fusionmodel import fusionreader
-from fusiondrqa import fusionreader
+from fusionmodel import fusionreader
 import torch
 import torch.nn.functional as Func
 import torch.optim as optim
