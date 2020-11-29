@@ -1,5 +1,7 @@
-from rnnmodel import docreader
-from fusionmodel import fusionreader
+#from rnnmodel import docreader
+from drqamodel import docreader
+#from fusionmodel import fusionreader
+from fusiondrqa import fusionreader
 import torch
 import torch.nn.functional as Func
 import torch.optim as optim
@@ -10,21 +12,23 @@ import string
 import collections
 from torch.utils.tensorboard import SummaryWriter #to print to tensor board
 import time
+from srumodel import srureader
 
 hidden_size = 128
 num_layers = 3
 embedding_length = 300
-learning_rate = 0.01
+learning_rate =  0.002
 use_qemb = True
-dropout = 0.5
+dropout = 0.3
 learning_rate_decay = 0.9
 grad_clipping = 10
 batch_size=32
-in_dropout = 0.5
-out_dropout = 0.5
+in_dropout = 0.3
+out_dropout = 0.3
 model = "RNN"
 #model = "FUSION"
-resume = False
+#model = "SRU"
+resume = True
 
 
 class Train():
@@ -42,11 +46,15 @@ class Train():
         self.opt['dropout'] = dropout
         self.opt['in_dropout'] = in_dropout
         self.opt['out_dropout']= out_dropout
+        self.device ="cuda" if torch.cuda.is_available() else "cpu"
+        print(self.device)
         if model == "RNN":
             self.network = docreader(self.opt, embedding)
-        else:
+        elif model == "FUSION":
             self.network = fusionreader(self.opt,embedding)
-
+        else:
+            self.network = srureader(self.opt,embedding)
+        self.network = self.network.to(self.device)
     def train(self,epochs,batches,dev_mb,dev_y,resume,n_file):
 
         # if not resume:
@@ -55,7 +63,7 @@ class Train():
         e_start = 0
         self.losses = []
         if resume:
-            state = torch.load(n_file)
+            state = torch.load(n_file,map_location=torch.device('cpu'))
             self.network.load_state_dict(state['state_dict'])
             self.optimizer= state['optimizer']
             e_start = state['epoch']
@@ -71,11 +79,11 @@ class Train():
             j = 0
             st_time = time.time()
             self.e_loss = 0
-            for batch in batches:
+            """for batch in batches:
                 self.step(batch)
                 if j % 100 == 0:
                     print("{} batches are done!!!!".format(j))
-                j+=1
+                j+=1"""
             print("Training for {} iteration is done!!!!".format(e))
             predictions.clear()
             for batch in dev_mb:
@@ -94,8 +102,6 @@ class Train():
             self.writer.add_scalar('F1', f1,global_step=step)
             step += 1
 
-            for param_group in self.optimizer.param_groups:
-                param_group['lr'] *= learning_rate_decay
 
             try:
                 if e % 2 == 0:
@@ -105,9 +111,11 @@ class Train():
                 continue
 
     def step(self,batch):
-        x_inputs = batch[:7]
+        x_inputs = [inp.to(self.device) for inp in batch[:7]]
         ans_start = batch[8]
         ans_end = batch[9]
+        ans_start  = ans_start.to(self.device)
+        ans_end = ans_end.to(self.device)
         # Main network for docreader model
         # Values from the network
         self.network.train()
@@ -126,7 +134,7 @@ class Train():
 
     def predict(self,batch):
         self.network.eval()
-        x_inputs = batch[:7]
+        x_inputs = [inp.to(self.device) for inp in batch[:7]]
         text = batch[7]
         span = batch[8]
         with torch.no_grad():
@@ -190,21 +198,19 @@ class Train():
                 final_score = f1_score
         return final_score
 
-    """def _score(self,g_tokens, a_tokens):
-        common = collections.Counter(g_tokens) & collections.Counter(a_tokens)
-        num_same = sum(common.values())
-        if num_same == 0:
-            return 0
-        precision = num_same / len(g_tokens)
-        recall = num_same / len(a_tokens)
-        f1 = (2 * precision * recall) / (precision + recall)
-        return f1
-    def _f1_score(self,pred, answers):
-        if pred is None or answers is None:
-            return 0
-        g_tokens = self.__normalize_answer(pred).split()
-        scores = [self._score(g_tokens, self.__normalize_answer(a).split()) for a in answers]
-        return max(scores)"""
+    def loadandpredict(self, dev_mb, resume, n_file):
+
+        # if not resume:
+        if resume:
+            state = torch.load(n_file, map_location=torch.device('cpu'))
+            self.network.load_state_dict(state['state_dict'])
+            self.optimizer = state['optimizer']
+            e_start = state['epoch']
+            self.losses = state['losses']
+        predictions = []
+        for batch in dev_mb:
+            predictions.extend(self.predict(batch))
+        return predictions[0]
 
     def save(self,filename,epoch,scores):
 
@@ -312,6 +318,7 @@ def load_batches():
     #dev_mb = samples['dev_x']
     #dev_y = samples['dev_y']
     minibatches.close()
+    #train_mb = [0]
     return train_mb,dev_mb,dev_y,embedding,config
 
 def test_main():
@@ -322,8 +329,9 @@ def test_main():
                                                                                                   len(dev_mb)))
     embedding = embedding.float()
     tr = Train(config,embedding,model)
-    tr.train(1,train_mb,dev_mb,dev_y,resume,'network3')
+    tr.train(40,train_mb,dev_mb,dev_y,resume,'/Users/skosgi/Downloads/network26')
 
 if __name__ == '__main__':
     test_main()
+    print(torch.cuda.is_available())
 
