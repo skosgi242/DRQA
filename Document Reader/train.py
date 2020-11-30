@@ -138,7 +138,7 @@ class Train():
         with torch.no_grad():
             start,end = self.network(*x_inputs)
         preds = []
-        max_len = start.size(1)
+        max_len = 15
         for i in range(start.size(0)):
             scores = torch.ger(start[i], end[i])
             scores.triu_().tril_(max_len - 1)
