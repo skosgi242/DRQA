@@ -21,30 +21,7 @@ infile = open('/Users/skosgi/Downloads/nlp/Project/glove','rb')
 glove = pickle.load(infile)
 infile.close()
 
-exp1 = re.compile(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+',re.DOTALL)
-exp2 = re.compile(r'{\|(.*?)\|}',re.DOTALL)
-exp3 = re.compile(r'\[\[category:(.*?)\]\]',re.DOTALL)
-exp4 = re.compile(r'{{infobox((.|\n)*?)}}',re.DOTALL)
 
-exp5 = re.compile(r'{{v?cite(.*?)}}',re.DOTALL)
-exp6 = re.compile(r'\[\[file:(.*?)\]\]',re.DOTALL)
-exp7 = re.compile(r'\{\{.*?\}\}',re.DOTALL)
-exp8 = re.compile(r'\[\[Category.*?\]\]',re.DOTALL)
-exp9 = re.compile(r'\=.*?\=')
-
-
-def file2text(file):
-    infile = open(file, 'r')
-    text = infile.read()
-    #text = "{{abcd}}abcdjhbfjrb"
-    text = exp1.sub('', text)
-    text = exp2.sub('', text)
-    text = exp5.sub('', text)
-    text = exp6.sub('', text)
-    text = exp7.sub('',text)
-    text = exp8.sub('',text)
-    text = exp9.sub('',text)
-    return text
 
 def load_vocab():
     vocab = set()
@@ -68,56 +45,6 @@ def tolist(df,type):
             answers = [w['text'] for w in df['answers'][i]]
             samples.append((df['id'][i],df['context'][i],df['question'][i],answers))
         return samples
-def __removeHtmlTags(sequence):
-    #########################################################################################
-    # This method removes any HTML tags and gets only the text from the given sequence.
-    #   For e.g., in the sequence "<H1>This is the header</H1>", it removes H1 tag
-    #   and returns "This is the header".
-    #########################################################################################
-    try:
-        if sequence is not None and sequence.strip() != "":
-            return re.sub(r'<(.*?)>', '', sequence)
-        return sequence  # return sequence as is without any changes
-    except:
-        exc_type, exc_value, exc_traceback = sys.exc_info()
-        err = "Error occurred while removing HTML tags in the sequence '{0}'. Error is: {1}; {2}".format(sequence,
-                                                                                                         str(
-                                                                                                             exc_type),
-                                                                                                         str(
-                                                                                                             exc_value))
-        raise Exception(err)
-
-def __replaceurls(sequence):
-    #########################################################################################
-    # This method removes urls in the given sequence.
-    #########################################################################################
-    try:
-        if sequence is not None and sequence.strip() != "":
-            return re.sub(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', '',
-                          sequence, flags=re.MULTILINE)
-        return sequence  # return sequence as is without any changes
-    except:
-        exc_type, exc_value, exc_traceback = sys.exc_info()
-        err = "Error occurred while removing HTML tags in the sequence '{0}'. Error is: {1}; {2}".format(sequence,
-                                                                                                         str(
-                                                                                                             exc_type),
-                                                                                                         str(
-                                                                                                             exc_value))
-        raise Exception(err)
-
-def __removePunctuations(sequence):
-    #########################################################################################
-    # This method removes any punctuations and gets only the text from the given sequence.
-    #########################################################################################
-    try:
-        if sequence is not None and sequence.strip() != "":
-            return re.sub('[^A-Za-z0-9]+', ' ', sequence)
-        return sequence  # return sequence as is without any changes
-    except:
-        exc_type, exc_value, exc_traceback = sys.exc_info()
-        err = "Error occurred while removing punctuations in the sequence '{0}'. Error is: {1}; {2}".format(
-            sequence, str(exc_type), str(exc_value))
-        raise Exception(err)
 
 def __normalizeText(text):
     return unicodedata.normalize('NFD', text)
