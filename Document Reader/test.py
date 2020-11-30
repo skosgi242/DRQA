@@ -3,12 +3,13 @@ import string
 import pickle
 from sklearn.feature_extraction.text import TfidfVectorizer
 import numpy as np
+import sys
 
-wikifile = "wiki_10000.pkl"
-invfile = "inverted_index_10000.pkl"
-pathfile = "/Users/skosgi/Downloads/drqanetwork"
-question = "Where does india stand in troop contributor united nations?"
-vocab_path =  "vocab_set"
+wikifile = sys.argv[1]#"wiki_10000.pkl"
+invfile = sys.argv[2]#"inverted_index_10000.pkl"
+pathfile = sys.argv[3]#"/Users/skosgi/Downloads/drqanetwork"
+question = sys.argv[4]#"Where does india stand in troop contributor united nations?"
+vocab_path =  sys.argv[5]#"vocab_set"
 
 
 wiki = pickle.load(open(wikifile,'rb'))
@@ -48,7 +49,6 @@ class DocumentRetriever:
 ret = DocumentRetriever()
 
 contexts = ret.find(q=question, count=2)
-con = ""
 
 
 for context in contexts:
